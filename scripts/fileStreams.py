@@ -9,7 +9,7 @@ except ImportError:
 
 import zstandard
 
-from zst_blocks_format.python_cli.ZstBlocksFile import ZstBlocksFile
+from .zst_blocks_format.python_cli.ZstBlocksFile import ZstBlocksFile
 
 def getZstFileJsonStream(path: str, chunk_size=1024*1024*10) -> Iterator[tuple[int, dict]]:
 	dctx = zstandard.ZstdDecompressor(max_window_size=2147483648)
@@ -21,6 +21,8 @@ def getZstFileJsonStream(path: str, chunk_size=1024*1024*10) -> Iterator[tuple[i
 		for line in lines[:-1]:
 			try:
 				yield len(line), json.loads(line)
+			except GeneratorExit:
+				return
 			except:
 				print("Error parsing line: " + line)
 				print("Current string: " + currentString)

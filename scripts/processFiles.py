@@ -1,54 +1,39 @@
 import sys
+
 version = sys.version_info
 if version.major < 3 or (version.major == 3 and version.minor < 10):
-	raise RuntimeError("This script requires Python 3.10 or higher")
+    raise RuntimeError("This script requires Python 3.10 or higher")
 import os
-from typing import Any, Iterable
+from typing import Any
 
-from fileStreams import getFileJsonStream
+from utils import processFile, processFolder
 
-
-fileOrFolderPath = r"<path to file or folder>"
 recursive = False
 
-def processRow(row: dict[str, Any]):
-	# Do something with the row
-	pass
 
-def processFile(path: str):
-	jsonStream = getFileJsonStream(path)
-	if jsonStream is None:
-		print(f"Skipping unknown file {path}")
-		return
-	for i, (lineLength, row) in enumerate(jsonStream):
-		if i % 10_000 == 0:
-			print(f"\rRow {i}", end="")
-		processRow(row)
-	print(f"\rRow {i+1}")
+def _processRow(row: dict[str, Any]):
+    # Do something with the row
+    pass
 
-def processFolder(path: str):
-	fileIterator: Iterable[str]
-	if recursive:
-		def recursiveFileIterator():
-			for root, dirs, files in os.walk(path):
-				for file in files:
-					yield os.path.join(root, file)
-		fileIterator = recursiveFileIterator()
-	else:
-		fileIterator = os.listdir(path)
-		fileIterator = (os.path.join(path, file) for file in fileIterator)
-	
-	for i, file in enumerate(fileIterator):
-		print(f"Processing file {i+1: 3} {file}")
-		processFile(file)
 
-def main():
-	if os.path.isdir(fileOrFolderPath):
-		processFolder(fileOrFolderPath)
-	else:
-		processFile(fileOrFolderPath)
-	
-	print("Done :>")
+def main(path: str):
+    """
+    Process a file or folder, and call _processRow on each row
+
+    :param path: File or folder
+    :return: None
+    """
+    if os.path.isdir(path):
+        processFolder(path, _processRow, recursive=recursive)
+    else:
+        processFile(path, _processRow)
+
+    print("Done :>")
+
 
 if __name__ == "__main__":
-	main()
+    path = sys.argv[1]
+    if not path:
+        raise ValueError("Please provide a file or folder path")
+
+    main(path)
